@@ -14,7 +14,7 @@ function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-[#050810] flex items-center justify-center px-4">
-      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-white/[0.06] p-8 text-white shadow-2xl backdrop-blur-xl">
+      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-white/6 p-8 text-white shadow-2xl backdrop-blur-xl">
 
         <h1 className="mb-6 text-3xl font-bold">
           Mi perfil

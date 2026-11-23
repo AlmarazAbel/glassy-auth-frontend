@@ -1,7 +1,11 @@
 
+import { Routes, Route, Navigate } from 'react-router-dom'
+
 import AuthPage from './pages/AuthPage'
 import ProfilePage from './pages/ProfilePage'
+
 import { AuthProvider, useAuth } from './context/AuthContext'
+import ProtectedRoute from './components/routes/ProtectedRoute'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -16,7 +20,36 @@ function AppContent() {
     )
   }
 
-  return user ? <ProfilePage /> : <AuthPage />
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <Navigate to={user ? '/profile' : '/login'} replace />
+        }
+      />
+
+      <Route
+        path="/login"
+        element={
+          user ? <Navigate to="/profile" replace /> : <AuthPage />
+        }
+      />
+
+      <Route
+        path="/register"
+        element={
+          user ? <Navigate to="/profile" replace /> : <AuthPage />
+        }
+      />
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/profile" element={<ProfilePage />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
 }
 
 function App() {
