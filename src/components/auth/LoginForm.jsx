@@ -1,71 +1,120 @@
-
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { registerUser, loginUser } from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
 
 function LoginForm() {
-  const [isRegister, setIsRegister] = useState(false)
+  const { setUser } = useAuth();
+  const [isRegister, setIsRegister] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-  })
+    name: "",
+    email: "",
+    password: "",
+  });
 
-  const [errors, setErrors] = useState({})
-  const [message, setMessage] = useState('')
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("success");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
 
     setFormData({
       ...formData,
       [name]: value,
-    })
+    });
 
     setErrors({
       ...errors,
-      [name]: '',
-    })
+      [name]: "",
+    });
 
-    setMessage('')
-  }
+    setMessage("");
+  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    const newErrors = {}
+    const newErrors = {};
 
     if (isRegister && !formData.name.trim()) {
-      newErrors.name = 'El nombre es obligatorio'
+      newErrors.name = "El nombre es obligatorio";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'El email es obligatorio'
+      newErrors.email = "El email es obligatorio";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Ingresá un email válido'
+      newErrors.email = "Ingresá un email válido";
     }
 
     if (!formData.password) {
-      newErrors.password = 'La contraseña es obligatoria'
+      newErrors.password = "La contraseña es obligatoria";
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Debe tener al menos 8 caracteres'
+      newErrors.password = "Debe tener al menos 8 caracteres";
     }
 
-    setErrors(newErrors)
+    setErrors(newErrors);
+    setMessage("");
 
-    if (Object.keys(newErrors).length === 0) {
+    if (Object.keys(newErrors).length > 0) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      let result;
+
+      if (isRegister) {
+        result = await registerUser({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          password: formData.password,
+        });
+      } else {
+        result = await loginUser({
+          email: formData.email.trim(),
+          password: formData.password,
+        });
+      }
+
       setMessage(
-        'Datos validados correctamente. Próximamente conectaremos el servidor.'
-      )
+        result.message ||
+          (isRegister
+            ? "Cuenta creada correctamente."
+            : "Inicio de sesión exitoso."),
+      );
+
+      setMessageType("success");
+
+      // Si el usuario inició sesión, guardar sus datos
+      if (!isRegister) {
+        setUser(result.user);
+      }
+
+      if (isRegister) {
+        setFormData({
+          name: "",
+          email: "",
+          password: "",
+        });
+      }
+    } catch (error) {
+      setMessage(error.message);
+      setMessageType("error");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   const changeMode = () => {
-    setIsRegister(!isRegister)
-    setErrors({})
-    setMessage('')
-    setFormData({ name: '', email: '', password: '' })
-  }
+    setIsRegister(!isRegister);
+    setErrors({});
+    setMessage("");
+    setFormData({ name: "", email: "", password: "" });
+  };
 
   return (
     <motion.div
@@ -74,7 +123,7 @@ function LoginForm() {
     >
       <AnimatePresence mode="wait">
         <motion.div
-          key={isRegister ? 'register' : 'login'}
+          key={isRegister ? "register" : "login"}
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -15 }}
@@ -82,13 +131,13 @@ function LoginForm() {
         >
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold text-white">
-              {isRegister ? 'Create Account' : 'Welcome Back'}
+              {isRegister ? "Crear una cuenta" : "Bienvenido"}
             </h1>
 
             <p className="mt-2 text-sm text-gray-400">
               {isRegister
-                ? 'Create your account to get started'
-                : 'Sign in to continue to your account'}
+                ? "Crea tu cuenta para empezar"
+                : "Inicia sesión para continuar accediendo a tu cuenta"}
             </p>
           </div>
 
@@ -96,7 +145,7 @@ function LoginForm() {
             {isRegister && (
               <div>
                 <label className="mb-2 block text-sm text-gray-300">
-                  Full Name
+                  Nombre Completo
                 </label>
 
                 <input
@@ -104,7 +153,7 @@ function LoginForm() {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Your name"
+                  placeholder="Tu nombre"
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
                 />
 
@@ -116,7 +165,7 @@ function LoginForm() {
 
             <div>
               <label className="mb-2 block text-sm text-gray-300">
-                Email Address
+                Correo Electronico
               </label>
 
               <input
@@ -124,7 +173,7 @@ function LoginForm() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="you@example.com"
+                placeholder="tucorreo@ejemplo.com"
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-cyan-400"
               />
 
@@ -135,7 +184,7 @@ function LoginForm() {
 
             <div>
               <label className="mb-2 block text-sm text-gray-300">
-                Password
+                Contraseña
               </label>
 
               <input
@@ -148,9 +197,7 @@ function LoginForm() {
               />
 
               {errors.password && (
-                <p className="mt-1 text-sm text-red-400">
-                  {errors.password}
-                </p>
+                <p className="mt-1 text-sm text-red-400">{errors.password}</p>
               )}
             </div>
 
@@ -158,51 +205,58 @@ function LoginForm() {
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center gap-2 text-gray-400">
                   <input type="checkbox" className="accent-cyan-400" />
-                  Remember me
+                  Recordar
                 </label>
 
                 <button
                   type="button"
                   className="text-cyan-400 transition hover:text-cyan-300"
                 >
-                  Forgot password?
+                  Olvidaste la contraseña?
                 </button>
               </div>
             )}
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
               type="submit"
-              className="w-full rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 py-3 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:shadow-cyan-500/40"
+              disabled={loading}
+              className="w-full rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 py-3 font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:shadow-cyan-500/40 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isRegister ? 'Create Account' : 'Sign In'}
+              {loading
+                ? "Processing..."
+                : isRegister
+                  ? "Create Account"
+                  : "Sign In"}
             </motion.button>
 
             {message && (
-              <p className="text-center text-sm text-cyan-300">
+              <p
+                className={`text-center text-sm ${
+                  messageType === "error" ? "text-red-400" : "text-cyan-300"
+                }`}
+              >
                 {message}
               </p>
             )}
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-400">
-            {isRegister
-              ? 'Already have an account?'
-              : "Don't have an account?"}
+            {isRegister ? "Ya tienes una cuenta?" : "No tienes una cuenta?"}
 
             <button
               type="button"
               onClick={changeMode}
               className="ml-2 font-semibold text-cyan-400 transition hover:text-cyan-300"
             >
-              {isRegister ? 'Sign In' : 'Create Account'}
+              {isRegister ? "Iniciar sesión" : "Crear una cuenta"}
             </button>
           </p>
         </motion.div>
       </AnimatePresence>
     </motion.div>
-  )
+  );
 }
 
-export default LoginForm
+export default LoginForm;

@@ -1,14 +1,15 @@
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/auth'
 
-const request = async (endpoint, data) => {
+const request = async (endpoint, options = {}) => {
   const response = await fetch(`${API_URL}${endpoint}`, {
-    method: 'POST',
+    credentials: 'include',
+    ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...options.headers,
     },
-    credentials: 'include',
-    body: JSON.stringify(data),
+    body: options.body ? JSON.stringify(options.body) : undefined,
   })
 
   const result = await response.json()
@@ -21,9 +22,27 @@ const request = async (endpoint, data) => {
 }
 
 export const registerUser = (userData) => {
-  return request('/register', userData)
+  return request('/register', {
+    method: 'POST',
+    body: userData,
+  })
 }
 
 export const loginUser = (credentials) => {
-  return request('/login', credentials)
+  return request('/login', {
+    method: 'POST',
+    body: credentials,
+  })
+}
+
+export const getProfile = () => {
+  return request('/profile', {
+    method: 'GET',
+  })
+}
+
+export const logoutUser = () => {
+  return request('/logout', {
+    method: 'POST',
+  })
 }
